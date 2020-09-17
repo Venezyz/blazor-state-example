@@ -1,47 +1,44 @@
 ﻿@page "/cards"
 @inject HttpClient Http
- 
+
+@using DemoCanalNet_State.Features.Cards
+
+@inherits BlazorStateComponent
+
 <div class="alert alert-secondary">
-    <h3>DeckId: @(deckId ?? "None")</h3>
-    <h4>Remaining cards: @remainingCards</h4>
+    <h3>DeckId: @State.DeckId</h3>
+    <h4>Remaining cards: @State.RemainingCards</h4>
     <button class="btn btn-outline-primary " type="button" @onclick="@HandleShuffle">Shuffle</button>
 </div>
 
 <div class="jumbotron">
-    <button class="btn btn-outline-primary " type="button" @onclick="@HandleNewCard">Shuffle</button>
-    <h3>Card: @(currentCard ?? "None")</h3>
-    <h3>Suit: @(currentSuit ?? "None")</h3>
-    <img src="@(currentCardImage ?? "https://i.pinimg.com/originals/10/80/a4/1080a4bd1a33cec92019fab5efb3995d.png")" style="width: 226px; height: 314px;" alt="Card image" />
+    @if (State.Loading)
+    {
+        <div>
+            <img src="https://miro.medium.com/max/882/1*9EBHIOzhE1XfMYoKz1JcsQ.gif" style="max-width: 50px;" alt="Loading" />
+        </div>
+    }
+    else
+    {
+        <div>
+            <button class="btn btn-outline-primary " type="button" @onclick="@HandleDrawCard">Draw</button>
+            <h3>Card: @State.CurrentCard</h3>
+            <h3>Suit: @State.CurrentSuit</h3>
+            <img src="@State.CurrentImage" style="width: 226px; height: 314px;" alt="Card image" />
+        </div>
+    }
 </div>
 
 @code {
-
-    private int remainingCards = 0;
-    private string deckId = null;
-    private string currentCard = null;
-    private string currentSuit = null;
-    private string currentCardImage = null;
+    CardState State => GetState<CardState>();
 
     private async Task HandleShuffle()
     {
-        var response = await Http.GetFromJsonAsync<ShuffleResponse>("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
-        deckId = response.DeckId;
-        remainingCards = response.Remaining;
+        await Mediator.Send(new CardState.ShuffleAction());
     }
 
-    private async Task HandleNewCard()
+    private async Task HandleDrawCard()
     {
-        await Task.Delay(5000);
-        var response = await Http.GetFromJsonAsync<DrawCardResponse>($"https://deckofcardsapi.com/api/deck/{deckId}/draw/?count=1");
-        if (response.Success)
-        {
-            var card = response.Cards.First();
-
-            currentCard = card.Value;
-            currentSuit = card.Suit;
-            currentCardImage = card.Image;
-            remainingCards = response.Remaining;
-            deckId = response.DeckId;
-        }
+        await Mediator.Send(new CardState.DrawAction(State.DeckId));
     }
 }
