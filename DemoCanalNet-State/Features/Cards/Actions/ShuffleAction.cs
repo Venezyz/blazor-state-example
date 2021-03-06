@@ -6,7 +6,7 @@ namespace DemoCanalNet_State.Features.Cards
     {
         public class ShuffleAction : IAction
         {
-            
+            // should I need introduce something here ?!
         }
     }
 }
